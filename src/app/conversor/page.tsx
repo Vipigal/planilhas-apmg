@@ -5,12 +5,30 @@ export default function Conversor() {
   const jsonData: any[] = [];
   const header: any[] = [];
 
-  const uploadFiles = async (formdata: FormData) => {
+  const uploadFiles = async (files: File[]) => {
     "use server";
-    const files = formdata.getAll("files") as File[];
+    // const files = formdata.getAll("files") as File[];
+    console.log(files);
 
     // for(const file of files){
     const fileBuffer = await files[0].arrayBuffer();
+    const wb = XLSX.read(fileBuffer);
+    // }
+
+    const prepositions = ["da", "de", "do", "dos", "das", "e"];
+    const permitidas = ["APM", "MG"];
+
+    const ws = wb.Sheets["Sheet1"];
+    console.log(ws);
+  };
+
+  const uploadFilesForm = async (formdata: FormData) => {
+    "use server";
+    const files = formdata.getAll("files") as File[] | null;
+    console.log(files);
+
+    // for(const file of files){
+    const fileBuffer = await files?.[0]?.arrayBuffer();
     const wb = XLSX.read(fileBuffer);
     // }
 
@@ -43,7 +61,7 @@ export default function Conversor() {
           </ul>
         </div>
       </div>
-      <FileInput submitAction={uploadFiles} />
+      <FileInput submitAction={uploadFiles} actionForm={uploadFilesForm} />
     </div>
   );
 }
