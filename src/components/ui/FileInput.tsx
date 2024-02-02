@@ -1,19 +1,23 @@
 "use client";
 
-import { IconFileSpreadsheet, IconX } from "@tabler/icons-react";
-import { ChangeEvent, useState, useTransition } from "react";
+import { IconFileSpreadsheet, IconSettings, IconX } from "@tabler/icons-react";
+import { ChangeEvent, useEffect, useState, useTransition } from "react";
 import { ToastContainer } from "react-toastify";
+import Modal from "./Modal";
+import { read, utils as xlsxUtils } from "xlsx";
+import { Checkbox } from "./Checkbox";
+import Loader from "./Loader";
 
 interface Props {
-  submitAction: (files: File[]) => Promise<void>;
-  actionForm: (formdata: FormData) => Promise<void>;
+  handleSubmit: (files: File[]) => Promise<void>;
 }
 
-export function FileInput({ submitAction, actionForm }: Props) {
+export function FileInput({ handleSubmit }: Props) {
   const MAX_FILES = 10;
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [fileLimit, setFileLimit] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [fileSettings, setFileSettings] = useState<File | null>(null);
 
   const handleUploadFiles = (files: File[]) => {
     const uploaded = [...uploadedFiles];
@@ -53,16 +57,99 @@ export function FileInput({ submitAction, actionForm }: Props) {
 
   const onClick = () => {
     startTransition(async () => {
-      const formData = new FormData();
-      for (const file of uploadedFiles) {
-        formData.append("files", file);
-      }
-      await actionForm(formData);
+      await handleSubmit(uploadedFiles);
     });
   };
 
+  const getHeaderInfo = async (file: File): Promise<string[] | null> => {
+    try {
+      const fileBuffer = await file.arrayBuffer();
+      const wb = read(fileBuffer, { sheetRows: 1 });
+
+      const firstSheetName = wb.SheetNames[0];
+      const worksheet = wb.Sheets[firstSheetName];
+      const options = { header: 1 };
+      const sheetData2 = xlsxUtils.sheet_to_json(worksheet, options);
+      const header = sheetData2.shift();
+
+      if (!Array.isArray(header))
+        throw new Error("Falha na conversão do header array");
+
+      return header as string[];
+    } catch (e) {
+      console.log(e); //toast
+      return null;
+    }
+  };
+
+  interface HeaderSettings {
+    title: string;
+    enabled: boolean;
+  }
+
+  const [headerInfo, setHeaderInfo] = useState<HeaderSettings[] | null>(null);
+  useEffect(() => {
+    if (fileSettings) {
+      const settings = async () => {
+        const headers = await getHeaderInfo(fileSettings);
+        const headerSettings: HeaderSettings[] | null =
+          headers?.map((header) => ({ title: header, enabled: true })) || null;
+        setHeaderInfo(headerSettings);
+      };
+      settings();
+    }
+  }, [fileSettings]);
+
   return (
     <div className="flex flex-col gap-4">
+      <Modal
+        opened={fileSettings !== null}
+        closeModal={() => {
+          setFileSettings(null);
+          setHeaderInfo(null);
+        }}
+        className="bg-white rounded-md backdrop-blur-md"
+        onSubmit={() => {
+          setHeaderInfo(null);
+        }}
+      >
+        <div className="flex flex-col w-full min-w-[60vw] max-h-[80vh] justify-center p-8 gap-2 overflow-auto">
+          <span className="font-bold text-xl">
+            Selecione quais colunas deverão ser convertidas:
+          </span>
+          <hr className="w-full h-2" />
+          <div className="flex flex-col gap-2">
+            {headerInfo ? (
+              headerInfo.map((header, idx) => {
+                return (
+                  <div key={idx} className="flex gap-2">
+                    <Checkbox
+                      checked={header.enabled}
+                      onCheckedChange={(e) => {
+                        setHeaderInfo(
+                          headerInfo.map((oldHeader) => {
+                            if (oldHeader.title === header.title) {
+                              return { ...header, enabled: Boolean(e) };
+                            } else {
+                              return oldHeader;
+                            }
+                          })
+                        );
+                      }}
+                    />
+                    <span>{header.title}</span>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="flex self-center justify-self-center ">
+                <Loader />
+              </div>
+            )}
+          </div>
+        </div>
+      </Modal>
+
       <ToastContainer
         position="top-center"
         autoClose={2000}
@@ -115,17 +202,27 @@ export function FileInput({ submitAction, actionForm }: Props) {
                 <IconFileSpreadsheet color="green" />
                 {file.name.split(".")[0]}
               </div>
-              <IconX
-                color="gray"
-                className="cursor-pointer"
-                size={20}
-                onClick={() => {
-                  setFileLimit(false);
-                  setUploadedFiles((prev) =>
-                    prev.filter((_, index) => index !== idx)
-                  );
-                }}
-              />
+              <div className="flex gap-1">
+                <IconSettings
+                  color="gray"
+                  className="cursor-pointer"
+                  size={20}
+                  onClick={() => {
+                    setFileSettings(file);
+                  }}
+                />
+                <IconX
+                  color="gray"
+                  className="cursor-pointer"
+                  size={20}
+                  onClick={() => {
+                    setFileLimit(false);
+                    setUploadedFiles((prev) =>
+                      prev.filter((_, index) => index !== idx)
+                    );
+                  }}
+                />
+              </div>
             </div>
           );
         })}

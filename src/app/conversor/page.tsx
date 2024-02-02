@@ -1,29 +1,14 @@
+"use client";
+
 import { FileInput } from "@/components/ui/FileInput";
+import Loader from "@/components/ui/Loader";
+import { useState } from "react";
 import * as XLSX from "xlsx";
 
 export default function Conversor() {
-  const jsonData: any[] = [];
-  const header: any[] = [];
-
-  const uploadFiles = async (files: File[]) => {
-    "use server";
-    // const files = formdata.getAll("files") as File[];
-    console.log(files);
-
-    // for(const file of files){
-    const fileBuffer = await files[0].arrayBuffer();
-    const wb = XLSX.read(fileBuffer);
-    // }
-
-    const prepositions = ["da", "de", "do", "dos", "das", "e"];
-    const permitidas = ["APM", "MG"];
-
-    const ws = wb.Sheets["Sheet1"];
-    console.log(ws);
-  };
+  const [isUploadLoading, setIsUploadLoading] = useState(false);
 
   const uploadFilesForm = async (formdata: FormData) => {
-    "use server";
     const files = formdata.getAll("files") as File[] | null;
     console.log(files);
 
@@ -37,6 +22,10 @@ export default function Conversor() {
 
     const ws = wb.Sheets["Sheet1"];
     console.log(ws);
+  };
+
+  const handleSubmitFiles = async (files: File[]) => {
+    setIsUploadLoading(true);
   };
 
   return (
@@ -61,7 +50,11 @@ export default function Conversor() {
           </ul>
         </div>
       </div>
-      <FileInput submitAction={uploadFiles} actionForm={uploadFilesForm} />
+      {isUploadLoading ? (
+        <Loader />
+      ) : (
+        <FileInput handleSubmit={handleSubmitFiles} />
+      )}
     </div>
   );
 }
