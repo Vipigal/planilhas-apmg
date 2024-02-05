@@ -5,27 +5,39 @@ import Loader from "@/components/ui/Loader";
 import { useState } from "react";
 import * as XLSX from "xlsx";
 
+export interface HeaderSettings {
+  title: string;
+  enabled: boolean;
+}
+
+export interface SpreadSheet {
+  content: File;
+  headerSettings: HeaderSettings[] | null;
+}
+
 export default function Conversor() {
   const [isUploadLoading, setIsUploadLoading] = useState(false);
 
-  const uploadFilesForm = async (formdata: FormData) => {
-    const files = formdata.getAll("files") as File[] | null;
-    console.log(files);
-
-    // for(const file of files){
-    const fileBuffer = await files?.[0]?.arrayBuffer();
-    const wb = XLSX.read(fileBuffer);
-    // }
-
+  const converterArquivo = async (workbook: XLSX.WorkBook) => {
     const prepositions = ["da", "de", "do", "dos", "das", "e"];
     const permitidas = ["APM", "MG"];
+    const sheetNames = workbook.SheetNames;
 
-    const ws = wb.Sheets["Sheet1"];
-    console.log(ws);
+    const worksheet = workbook.Sheets[sheetNames[0]];
+    console.log(worksheet);
   };
 
-  const handleSubmitFiles = async (files: File[]) => {
+  const handleSubmitFiles = async (spreadsheets: SpreadSheet[]) => {
     setIsUploadLoading(true);
+    for (const spreadsheet of spreadsheets) {
+      const file = spreadsheet.content;
+      const fileBuffer = await file.arrayBuffer();
+      const workbook = XLSX.read(fileBuffer);
+      await converterArquivo(workbook);
+    }
+    //limpar array
+    spreadsheets = [];
+    setIsUploadLoading(false);
   };
 
   return (

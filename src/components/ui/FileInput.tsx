@@ -7,24 +7,27 @@ import Modal from "./Modal";
 import { read, utils as xlsxUtils } from "xlsx";
 import { Checkbox } from "./Checkbox";
 import Loader from "./Loader";
+import { HeaderSettings, SpreadSheet } from "@/app/conversor/page";
 
 interface Props {
-  handleSubmit: (files: File[]) => Promise<void>;
+  handleSubmit: (spreadsheets: SpreadSheet[]) => Promise<void>;
 }
 
 export function FileInput({ handleSubmit }: Props) {
   const MAX_FILES = 10;
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [fileLimit, setFileLimit] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [fileSettings, setFileSettings] = useState<File | null>(null);
+  const [headerInfo, setHeaderInfo] = useState<HeaderSettings[] | null>(null);
+
+  const [spreadsheets, setSpreadsheets] = useState<SpreadSheet[]>([]);
 
   const handleUploadFiles = (files: File[]) => {
-    const uploaded = [...uploadedFiles];
+    const uploaded = [...spreadsheets];
     let limitExceeded = false;
     files.some((file) => {
-      if (uploaded.findIndex((f) => f.name === file.name) === -1) {
-        uploaded.push(file);
+      if (uploaded.findIndex((f) => f.content.name === file.name) === -1) {
+        uploaded.push({ content: file, headerSettings: null });
         if (uploaded.length === MAX_FILES) setFileLimit(true);
         if (uploaded.length > MAX_FILES) {
           setFileLimit(false);
@@ -43,7 +46,7 @@ export function FileInput({ handleSubmit }: Props) {
         }
       }
     });
-    if (!limitExceeded) setUploadedFiles(uploaded);
+    if (!limitExceeded) setSpreadsheets(uploaded);
   };
 
   const handleFileEvent = (e: ChangeEvent<HTMLInputElement>) => {
@@ -57,11 +60,13 @@ export function FileInput({ handleSubmit }: Props) {
 
   const onClick = () => {
     startTransition(async () => {
-      await handleSubmit(uploadedFiles);
+      await handleSubmit(spreadsheets);
+      setSpreadsheets([]);
     });
   };
 
   const getHeaderInfo = async (file: File): Promise<string[] | null> => {
+    //funcao custosa, evitar
     try {
       const fileBuffer = await file.arrayBuffer();
       const wb = read(fileBuffer, { sheetRows: 1 });
@@ -77,28 +82,29 @@ export function FileInput({ handleSubmit }: Props) {
 
       return header as string[];
     } catch (e) {
-      console.log(e); //toast
+      console.error(e); //toast
       return null;
     }
   };
 
-  interface HeaderSettings {
-    title: string;
-    enabled: boolean;
-  }
-
-  const [headerInfo, setHeaderInfo] = useState<HeaderSettings[] | null>(null);
   useEffect(() => {
     if (fileSettings) {
-      const settings = async () => {
+      const openedSpreadsheet = spreadsheets.find(
+        (spreadsheet) => spreadsheet.content.name === fileSettings.name
+      );
+      const runSettings = async () => {
         const headers = await getHeaderInfo(fileSettings);
         const headerSettings: HeaderSettings[] | null =
           headers?.map((header) => ({ title: header, enabled: true })) || null;
         setHeaderInfo(headerSettings);
       };
-      settings();
+      if (openedSpreadsheet && openedSpreadsheet.headerSettings) {
+        setHeaderInfo(openedSpreadsheet.headerSettings);
+      } else {
+        runSettings();
+      }
     }
-  }, [fileSettings]);
+  }, [fileSettings, spreadsheets]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -110,6 +116,16 @@ export function FileInput({ handleSubmit }: Props) {
         }}
         className="bg-white rounded-md backdrop-blur-md"
         onSubmit={() => {
+          const newSpreadsheetData: SpreadSheet[] = spreadsheets.map(
+            (spreadsheet) => {
+              if (spreadsheet.content.name === fileSettings?.name) {
+                return { ...spreadsheet, headerSettings: headerInfo };
+              } else {
+                return spreadsheet;
+              }
+            }
+          );
+          setSpreadsheets(newSpreadsheetData);
           setHeaderInfo(null);
         }}
       >
@@ -195,12 +211,12 @@ export function FileInput({ handleSubmit }: Props) {
         </button>
       </form>
       <div className="flex flex-col gap-3 overflow-auto">
-        {uploadedFiles.map((file, idx) => {
+        {spreadsheets.map((spreadsheet, idx) => {
           return (
             <div key={idx} className="flex justify-between gap-2 items-center ">
               <div className="flex gap-1">
                 <IconFileSpreadsheet color="green" />
-                {file.name.split(".")[0]}
+                {spreadsheet.content.name.split(".")[0]}
               </div>
               <div className="flex gap-1">
                 <IconSettings
@@ -208,7 +224,7 @@ export function FileInput({ handleSubmit }: Props) {
                   className="cursor-pointer"
                   size={20}
                   onClick={() => {
-                    setFileSettings(file);
+                    setFileSettings(spreadsheet.content);
                   }}
                 />
                 <IconX
@@ -217,7 +233,7 @@ export function FileInput({ handleSubmit }: Props) {
                   size={20}
                   onClick={() => {
                     setFileLimit(false);
-                    setUploadedFiles((prev) =>
+                    setSpreadsheets((prev) =>
                       prev.filter((_, index) => index !== idx)
                     );
                   }}
