@@ -4,6 +4,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import Title from "@/components/ui/Title";
+import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,6 +27,7 @@ export default function RootLayout({
           </a>
         </div>
         <main className="flex-1 h-full">{children}</main>
+        <Analytics />
       </body>
     </html>
   );
