@@ -10,7 +10,7 @@ interface Props {
 
 export default function GenericLink({ children, href, className }: Props) {
   const customClassName = twMerge(
-    "bg-white text-black p-10 hover:bg-gray-200 inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium",
+    "bg-white text-black p-10 hover:bg-gray-200 inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium shadow-lg",
     className
   );
   return (

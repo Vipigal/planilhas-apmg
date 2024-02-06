@@ -3,7 +3,7 @@
 import { FileInput } from "@/components/ui/FileInput";
 import Loader from "@/components/ui/Loader";
 import { useState } from "react";
-import { ToastContainer } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 import * as XLSX from "xlsx";
 
 export interface HeaderSettings {
@@ -103,29 +103,54 @@ export default function Conversor() {
   };
 
   const handleSubmitFiles = async (spreadsheets: SpreadSheet[]) => {
-    setIsUploadLoading(true);
-    let index = 0;
-    for (const spreadsheet of spreadsheets) {
-      const file = spreadsheet.content;
-      const fileBuffer = await file.arrayBuffer();
-      const workbook = XLSX.read(fileBuffer);
-      await converterArquivo(
-        workbook,
-        `${file.name.split(`.`)[0].trim().concat(`_convertido`)}` ||
-          `planilha-convertida-${index}`,
-        spreadsheet.headerSettings
-      );
-      index++;
+    try {
+      setIsUploadLoading(true);
+      let index = 0;
+      for (const spreadsheet of spreadsheets) {
+        const file = spreadsheet.content;
+        const fileBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(fileBuffer);
+        await converterArquivo(
+          workbook,
+          `${file.name.split(`.`)[0].trim().concat(`_convertido`)}` ||
+            `planilha-convertida-${index}`,
+          spreadsheet.headerSettings
+        );
+        index++;
+      }
+      //limpar array
+      spreadsheets = [];
+      setIsUploadLoading(false);
+    } catch (err) {
+      toast.error(`Erro na conversao: ${(err as Error).message}`, {
+        position: "top-center",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
+      console.error(err);
     }
-    //limpar array
-    spreadsheets = [];
-    setIsUploadLoading(false);
   };
 
   return (
-    <div className="flex flex-col items-center gap-40 h-full">
-      <ToastContainer />
-      <div className="flex flex-col items-center gap-5 w-fit max-w-[70vw] border mt-10 border-gray-500 p-10">
+    <div className="flex flex-col items-center gap-28 h-full">
+      <ToastContainer
+        position="top-center"
+        autoClose={2000}
+        hideProgressBar
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+      <div className="flex flex-col items-center gap-3 w-fit max-w-[70vw] border border-gray-500 p-10 backdrop-blur-3xl">
         <h1 className="text-xl">Como funciona:</h1>
         <div>
           <ul className="list-disc gap-2 flex flex-col leading-7">

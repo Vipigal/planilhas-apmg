@@ -28,6 +28,11 @@ export default function RootLayout({
         </div>
         <main className="flex-1 h-full">{children}</main>
         <Analytics />
+        <div className="flex items-center justify-center">
+          <span className="text-white text-sm">
+            FEITO POR VINICIUS GALVAO - TODOS OS DIREITOS RESERVADOS E ETC{" "}
+          </span>
+        </div>
       </body>
     </html>
   );

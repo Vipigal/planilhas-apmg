@@ -204,14 +204,14 @@ export function FileInput({ handleSubmit }: Props) {
           onClick={(e) => ((e.currentTarget.value as string | null) = null)} //lil hack para emitir evento ao adicionar mesmo arquivo
         />
         <button
-          className="border border-white px-3 py-1 rounded-md"
+          className="border border-white px-3 py-1 rounded-md hover:scale-105 transition-all ease-out"
           onClick={onClick}
           disabled={isPending}
         >
           ENVIAR
         </button>
       </form>
-      <div className="flex flex-col gap-3 overflow-auto">
+      <div className="flex flex-col gap-3 overflow-auto max-h-[15vh] p-4">
         {spreadsheets.map((spreadsheet, idx) => {
           return (
             <div key={idx} className="flex justify-between gap-2 items-center ">
