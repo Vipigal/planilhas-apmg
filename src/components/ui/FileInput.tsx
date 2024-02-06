@@ -2,7 +2,7 @@
 
 import { IconFileSpreadsheet, IconSettings, IconX } from "@tabler/icons-react";
 import { ChangeEvent, useEffect, useState, useTransition } from "react";
-import { ToastContainer } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 import Modal from "./Modal";
 import { read, utils as xlsxUtils } from "xlsx";
 import { Checkbox } from "./Checkbox";
@@ -31,16 +31,16 @@ export function FileInput({ handleSubmit }: Props) {
         if (uploaded.length === MAX_FILES) setFileLimit(true);
         if (uploaded.length > MAX_FILES) {
           setFileLimit(false);
-          // toast.error("O máximo de arquivos foi excedido!", {
-          //   position: "top-center",
-          //   autoClose: 2000,
-          //   hideProgressBar: true,
-          //   closeOnClick: true,
-          //   pauseOnHover: true,
-          //   draggable: true,
-          //   progress: undefined,
-          //   theme: "light",
-          // });
+          toast.error("O máximo de arquivos foi excedido!", {
+            position: "top-center",
+            autoClose: 2000,
+            hideProgressBar: true,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+          });
           limitExceeded = true;
           return true;
         }
@@ -129,12 +129,13 @@ export function FileInput({ handleSubmit }: Props) {
           setHeaderInfo(null);
         }}
       >
-        <div className="flex flex-col w-full min-w-[60vw] max-h-[80vh] justify-center p-8 gap-2 overflow-auto">
+        <div className="flex flex-col w-full min-w-[60vw] max-h-[80vh] justify-center p-8 gap-2 ">
           <span className="font-bold text-xl">
             Selecione quais colunas deverão ser convertidas:
           </span>
+
           <hr className="w-full h-2" />
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 overflow-auto">
             {headerInfo ? (
               headerInfo.map((header, idx) => {
                 return (
