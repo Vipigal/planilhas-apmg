@@ -21,8 +21,8 @@ export default function Conversor() {
 
   const handleSubmitFiles = async (spreadsheets: SpreadSheet[]) => {
     try {
-      setIsUploadLoading(true);
       for (const spreadsheet of spreadsheets) {
+        setIsUploadLoading(true);
         const file = spreadsheet.content;
 
         const formData = new FormData();
@@ -50,6 +50,7 @@ export default function Conversor() {
               a.click();
               window.URL.revokeObjectURL(url);
               document.body.removeChild(a);
+              setIsUploadLoading(false);
             } else {
               throw new Error("Erro na conversão");
             }
@@ -60,7 +61,6 @@ export default function Conversor() {
       }
       //limpar array
       spreadsheets = [];
-      setIsUploadLoading(false);
     } catch (err) {
       toast.error(`Erro na conversão: ${(err as Error).message}`, {
         position: "top-center",
