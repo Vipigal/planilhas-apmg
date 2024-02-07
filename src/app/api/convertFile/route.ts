@@ -104,7 +104,6 @@ export async function POST(req: NextRequest) {
     if (settings && typeof settings === "string") {
       headerSetting = JSON.parse(settings) as HeaderSettings[];
     }
-    console.log(headerSetting);
     if (!file) throw new Error("Could not retrieve file");
     const newFileName = `${file.name
       .split(`.`)[0]
